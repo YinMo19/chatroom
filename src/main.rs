@@ -11,6 +11,10 @@ use rocket::tokio::sync::broadcast::{channel, error::RecvError, Sender};
 use rocket::{Shutdown, State};
 use rocket_db_pools::sqlx::{self, FromRow};
 use rocket_db_pools::{Connection, Database};
+use sqlx::SqlitePool;
+use sqlx::{migrate::MigrateDatabase, Sqlite};
+// use chrono::{NaiveDateTime, Utc};
+const DB_URL: &str = "sqlite://messages.db";
 
 #[derive(Database)]
 #[database("messages")]
@@ -25,6 +29,7 @@ struct Message {
     #[field(validate = len(..20))]
     pub username: String,
     pub message: String,
+    // pub created_at: NaiveDateTime,
 }
 
 /// Returns an infinite stream of server-sent events. Each event is a message
@@ -94,8 +99,34 @@ async fn get_history(
     Ok(Json(messages))
 }
 
+async fn init_message_database() {
+    if !Sqlite::database_exists(DB_URL).await.unwrap_or(false) {
+        println!("Creating database {}", DB_URL);
+        match Sqlite::create_database(DB_URL).await {
+            Ok(_) => println!("Create db success"),
+            Err(error) => panic!("error: {}", error),
+        }
+    }
+
+    let init_sql = r#"
+        CREATE TABLE IF NOT EXISTS messages (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            room TEXT NOT NULL CHECK(length(room) <= 30),
+            username TEXT NOT NULL CHECK(length(username) <= 20),
+            message TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+    "#;
+
+    let db = SqlitePool::connect(DB_URL).await.unwrap();
+    let _result = sqlx::query(&init_sql).execute(&db).await.unwrap();
+}
+
 #[rocket::main]
 async fn main() -> Result<(), rocket::Error> {
+    // init the database (if not exists.)
+    init_message_database().await;
+
     let _rocket = rocket::build()
         .attach(MessageLog::init())
         .manage(channel::<Message>(1024).0)

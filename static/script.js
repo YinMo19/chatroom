@@ -175,7 +175,7 @@ function init () {
   // Initialize some rooms.
   addRoom('Public')
   // changeRoom("Public");
-  addMessage('Public', 'Public(Admin)', '欢迎。发送消息吧~', true)
+  // addMessage('Public', 'Public(Admin)', '欢迎。发送消息吧~', true)
 
   // Set up the form handler.
   newMessageForm.addEventListener('submit', e => {
