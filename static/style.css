@@ -88,6 +88,11 @@ button:hover:not(.active) {
     margin-left: 5px; /* 在用户名和时间之间添加一些间距 */
 }
 
+.message .ip {
+    font-size: 0.8em; /* 设置字体大小为父元素的80% */
+    color: gray;      /* 设置文字颜色为灰色 */
+    margin-left: 5px; /* 在用户名和时间之间添加一些间距 */
+}
 
 .message .text {
   white-space: pre-wrap; /* 允许文本换行显示 */

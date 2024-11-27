@@ -23,7 +23,8 @@ pub async fn init_message_database() {
             room TEXT NOT NULL CHECK(length(room) <= 30),
             username TEXT NOT NULL CHECK(length(username) <= 20),
             message TEXT NOT NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            ip_addr TEXT NOT NULL
         );
     "#;
 

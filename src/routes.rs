@@ -1,13 +1,14 @@
-use super::models::Message;
 use super::database::MessageLog;
+use super::models::Message;
 // use super::utils::DateTimeWrapper;
 use rocket::form::Form;
 use rocket::response::stream::{Event, EventStream};
+use rocket::serde::json::Json;
 use rocket::tokio::select;
 use rocket::tokio::sync::broadcast::{error::RecvError, Sender};
 use rocket::{Shutdown, State};
-use rocket::serde::json::Json;
 use rocket_db_pools::Connection;
+use std::net::IpAddr;
 
 #[get("/events")]
 pub async fn events(queue: &State<Sender<Message>>, mut end: Shutdown) -> EventStream![] {
@@ -29,19 +30,26 @@ pub async fn events(queue: &State<Sender<Message>>, mut end: Shutdown) -> EventS
 }
 
 #[post("/message", data = "<form>")]
-pub async fn post(mut db: Connection<MessageLog>, form: Form<Message>, queue: &State<Sender<Message>>) {
+pub async fn post(
+    mut db: Connection<MessageLog>,
+    form: Form<Message>,
+    queue: &State<Sender<Message>>,
+    client_ip: Option<IpAddr>,
+) {
+    // println!("New message from {:?}", client_ip);
     let message = form.into_inner();
     let _res = queue.send(message.clone());
 
     let query = r#"
-        INSERT INTO messages (room, username, message)
-        VALUES (?, ?, ?)
+        INSERT INTO messages (room, username, message, ip_addr)
+        VALUES (?, ?, ?, ?)
     "#;
 
     let _result = sqlx::query(&query)
         .bind(&message.room)
         .bind(&message.username)
         .bind(&message.message)
+        .bind(&client_ip.unwrap().to_string())
         .fetch_all(&mut **db)
         .await
         .expect("Failed to insert message");

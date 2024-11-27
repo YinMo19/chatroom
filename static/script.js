@@ -80,11 +80,21 @@ function changeRoom (name) {
         // }
         // const formattedDate = new Intl.DateTimeFormat('zh-CN', options).format(utcDate)
         const utcDate = new Date(msg.created_at)
-        const utc8Date = new Date(utcDate.getTime() + (16 * 60 * 60 * 1000))
-        const formattedDate = utc8Date.toISOString().substring(0, 19) // 格式化为 "YYYY-MM-DD HH:MM:SS"
+        const utc8Date = new Date(utcDate.getTime() + 16 * 60 * 60 * 1000)
+        const formattedDate = utc8Date
+          .toISOString()
+          .replace('T', ' ')
+          .substring(0, 19) // 格式化为 "YYYY-MM-DD HH:MM:SS"
         // console.log('created_at:', utc8Date)
         // console.log('formattedDate:', formattedDate)
-        addMessage(name, msg.username, msg.message, formattedDate, true)
+        addMessage(
+          name,
+          msg.username,
+          msg.message,
+          formattedDate,
+          msg.ip_addr,
+          true
+        )
       })
     })
     .catch(error => {
@@ -111,7 +121,7 @@ function changeRoom (name) {
 
 // Add `message` from `username` to `room`. If `push`, then actually store the
 // message. If the current room is `room`, render the message.
-function addMessage (room, username, message, createdAt, push = false) {
+function addMessage (room, username, message, createdAt, ip_addr, push = false) {
   if (push) {
     STATE[room].push({ username, message })
   }
@@ -123,6 +133,8 @@ function addMessage (room, username, message, createdAt, push = false) {
     // node.querySelector(".message .text").textContent = message;
     node.querySelector('.message .text').innerHTML = marked.parse(message)
     node.querySelector('.message .time').textContent = createdAt // 设置时间元素的内容
+    if (ip_addr != '')
+      node.querySelector('.message .ip').textContent = 'From ' + ip_addr
     messagesDiv.appendChild(node)
 
     // // // Scroll to the bottom of the messages div
@@ -165,7 +177,24 @@ function subscribe (uri) {
         !('created_at' in msg)
       )
         return
-      addMessage(msg.room, msg.username, msg.message, msg.created_at, true)
+      if (!('client_ip' in msg))
+        addMessage(
+          msg.room,
+          msg.username,
+          msg.message,
+          msg.created_at,
+          '',
+          true
+        )
+      else
+        addMessage(
+          msg.room,
+          msg.username,
+          msg.message,
+          msg.created_at,
+          msg.ip_addr,
+          true
+        )
     })
 
     events.addEventListener('open', () => {
@@ -227,7 +256,8 @@ function init () {
           room,
           username,
           message,
-          created_at: createdAt
+          created_at: createdAt,
+          ip_addr: ''  
         })
       }).then(response => {
         if (response.ok) messageField.value = ''
@@ -261,6 +291,7 @@ function init () {
       'Rocket',
       `Look, your own "${room}" room! Nice.`,
       'Now',
+      '',
       true
     )
   })

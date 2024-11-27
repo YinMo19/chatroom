@@ -23,6 +23,8 @@ pub struct Message {
     pub username: String,
     pub message: String,
     pub created_at: DateTimeWrapper,
+    #[field(validate = len(..16))]
+    pub ip_addr: String,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
