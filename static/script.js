@@ -1,5 +1,6 @@
 let roomListDiv = document.getElementById('room-list')
 let messagesDiv = document.getElementById('messages')
+// let newMessageForm = document.querySelector('#md-editor-v3 md-editor-v3').value
 let newMessageForm = document.getElementById('new-message')
 let newRoomForm = document.getElementById('new-room')
 let statusDiv = document.getElementById('status')
@@ -8,10 +9,12 @@ let roomTemplate = document.getElementById('room')
 let messageTemplate = document.getElementById('message')
 
 let messageField = newMessageForm.querySelector('#message')
+console.log(document.getElementById('md-editor-v3'))
+// let messageField = document.querySelector('#md-editor-v3 md-editor-v3').value
 let usernameField = newMessageForm.querySelector('#username')
 let roomNameField = newRoomForm.querySelector('#name')
 
-// import { marked } from 'marked';
+// import { marked } from 'marked'
 
 var STATE = {
   room: 'Public',
@@ -131,7 +134,10 @@ function addMessage (room, username, message, createdAt, ip_addr, push = false) 
     node.querySelector('.message .username').textContent = username
     node.querySelector('.message .username').style.color = hashColor(username)
     // node.querySelector(".message .text").textContent = message;
-    node.querySelector('.message .text').innerHTML = marked.parse(message)
+
+    const dirtyHtml = marked.parse(message)
+    const cleanHtml = DOMPurify.sanitize(dirtyHtml)
+    node.querySelector('.message .text').innerHTML = cleanHtml
     node.querySelector('.message .time').textContent = createdAt // 设置时间元素的内容
     if (ip_addr != '')
       node.querySelector('.message .ip').textContent = 'From ' + ip_addr
@@ -235,7 +241,9 @@ function init () {
     e.preventDefault()
 
     const room = STATE.room
+    // const message =  document.querySelector('#md-editor-v3 md-editor-v3').value
     const message = messageField.value
+    // console.log('Success:', message);
     const username = usernameField.value || 'guest'
     const createdAt =
       messageField.dataset.createdAt ||

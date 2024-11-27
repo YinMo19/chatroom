@@ -4,10 +4,23 @@
   --fg-light: #E8EDDF;
   --callout: rgb(255, 255, 102);
   --callout-dark: #101010;
+  --font-size: 16px;
 }
 
-* {
+/* * {
     font-size: 14px;
+} */
+
+/* 当屏幕宽度小于等于 600px 时，设置更大的字体大小 */
+@media (max-width: 1000px) {
+  :root {
+    --font-size: 30px;
+  }
+
+}
+
+body {
+  font-size: var(--font-size);
 }
 
 html, body, main {
@@ -103,7 +116,7 @@ button:hover:not(.active) {
     padding: 10px 20px;
     flex: 1;
     overflow-y: auto; /* 确保垂直方向上可以滚动 */
-    max-height: 1000px; /*设置一个最大高度 */
+    /* max-height: 1000px; 设置一个最大高度 */
 }
 
 form#new-message {
