@@ -66,7 +66,26 @@ function changeRoom (name) {
     .then(response => response.json())
     .then(data => {
       clearMessages()
-      data.forEach(msg => addMessage(name, msg.username, msg.message, true))
+      data.forEach(msg => {
+        // const utcDate = new Date(msg.created_at)
+        // const options = {
+        //   year: 'numeric',
+        //   month: '2-digit',
+        //   day: '2-digit',
+        //   hour: '2-digit',
+        //   minute: '2-digit',
+        //   second: '2-digit',
+        //   hour12: false,
+        //   timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone // 获取用户的时区
+        // }
+        // const formattedDate = new Intl.DateTimeFormat('zh-CN', options).format(utcDate)
+        const utcDate = new Date(msg.created_at)
+        const utc8Date = new Date(utcDate.getTime() + (16 * 60 * 60 * 1000))
+        const formattedDate = utc8Date.toISOString().substring(0, 19) // 格式化为 "YYYY-MM-DD HH:MM:SS"
+        // console.log('created_at:', utc8Date)
+        // console.log('formattedDate:', formattedDate)
+        addMessage(name, msg.username, msg.message, formattedDate, true)
+      })
     })
     .catch(error => {
       console.error('Error fetching history messages:', error)
@@ -92,7 +111,7 @@ function changeRoom (name) {
 
 // Add `message` from `username` to `room`. If `push`, then actually store the
 // message. If the current room is `room`, render the message.
-function addMessage (room, username, message, push = false) {
+function addMessage (room, username, message, createdAt, push = false) {
   if (push) {
     STATE[room].push({ username, message })
   }
@@ -103,6 +122,7 @@ function addMessage (room, username, message, push = false) {
     node.querySelector('.message .username').style.color = hashColor(username)
     // node.querySelector(".message .text").textContent = message;
     node.querySelector('.message .text').innerHTML = marked.parse(message)
+    node.querySelector('.message .time').textContent = createdAt // 设置时间元素的内容
     messagesDiv.appendChild(node)
 
     // // // Scroll to the bottom of the messages div
@@ -112,7 +132,6 @@ function addMessage (room, username, message, push = false) {
     // console.log('messagesDiv.scrollTop:', messagesDiv.scrollTop)
     // console.log('messagesDiv.scrollTop:', messagesDiv.scrollHeight - messagesDiv.clientHeight -
     //   messagesDiv.scrollTop + 1)
-
 
     // 延迟执行滚动操作
     const isScrolledToBottom =
@@ -139,9 +158,14 @@ function subscribe (uri) {
       console.log('raw data', JSON.stringify(ev.data))
       console.log('decoded data', JSON.stringify(JSON.parse(ev.data)))
       const msg = JSON.parse(ev.data)
-      if (!('message' in msg) || !('room' in msg) || !('username' in msg))
+      if (
+        !('message' in msg) ||
+        !('room' in msg) ||
+        !('username' in msg) ||
+        !('created_at' in msg)
+      )
         return
-      addMessage(msg.room, msg.username, msg.message, true)
+      addMessage(msg.room, msg.username, msg.message, msg.created_at, true)
     })
 
     events.addEventListener('open', () => {
@@ -184,7 +208,9 @@ function init () {
     const room = STATE.room
     const message = messageField.value
     const username = usernameField.value || 'guest'
-    const createdAt = messageField.dataset.createdAt || new Date().toLocaleString('zh-CN', { hour12: false }) // 默认值为当前时间，格式为 'YYYY-MM-DD HH:mm:ss'
+    const createdAt =
+      messageField.dataset.createdAt ||
+      new Date().toLocaleString('zh-CN', { hour12: false }) // 默认值为当前时间，格式为 'YYYY-MM-DD HH:mm:ss'
 
     if (!message || !username) return
 
@@ -197,9 +223,17 @@ function init () {
     if (STATE.connected) {
       fetch('/message', {
         method: 'POST',
-        body: new URLSearchParams({ room, username, message, created_at: createdAt })
+        body: new URLSearchParams({
+          room,
+          username,
+          message,
+          created_at: createdAt
+        })
       }).then(response => {
         if (response.ok) messageField.value = ''
+        setTimeout(() => {
+          messagesDiv.scrollTop = messagesDiv.scrollHeight
+        }, 0)
       })
     }
   })
@@ -222,7 +256,13 @@ function init () {
     roomNameField.value = ''
     if (!addRoom(room)) return
 
-    addMessage(room, 'Rocket', `Look, your own "${room}" room! Nice.`, true)
+    addMessage(
+      room,
+      'Rocket',
+      `Look, your own "${room}" room! Nice.`,
+      'Now',
+      true
+    )
   })
 
   // Subscribe to server-sent events.
@@ -230,9 +270,9 @@ function init () {
 }
 
 // 验证日期时间字符串，格式为 YYYY-MM-DD HH:mm:ss
-function isValidDateTime(dateString) {
-  const regex = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/;
-  return regex.test(dateString) && !isNaN(Date.parse(dateString));
+function isValidDateTime (dateString) {
+  const regex = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/
+  return regex.test(dateString) && !isNaN(Date.parse(dateString))
 }
 
 init()
