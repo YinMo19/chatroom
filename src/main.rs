@@ -1,8 +1,10 @@
 #[macro_use]
 extern crate rocket;
 
-use rocket::form::Form;
+use chrono::NaiveDateTime;
+use rocket::form::{Form, FromFormField, ValueField};
 use rocket::fs::{relative, FileServer};
+use rocket::http::uri::fmt::{Formatter, Query, UriDisplay};
 use rocket::response::stream::{Event, EventStream};
 use rocket::serde::json::Json;
 use rocket::serde::{Deserialize, Serialize};
@@ -11,9 +13,11 @@ use rocket::tokio::sync::broadcast::{channel, error::RecvError, Sender};
 use rocket::{Shutdown, State};
 use rocket_db_pools::sqlx::{self, FromRow};
 use rocket_db_pools::{Connection, Database};
-use sqlx::SqlitePool;
+use sqlx::sqlite::{SqliteTypeInfo, SqliteValueRef};
 use sqlx::{migrate::MigrateDatabase, Sqlite};
-// use chrono::{NaiveDateTime, Utc};
+use sqlx::{Decode, Encode, SqlitePool, Type};
+use std::fmt::{self, Write};
+
 const DB_URL: &str = "sqlite://messages.db";
 
 #[derive(Database)]
@@ -29,11 +33,54 @@ struct Message {
     #[field(validate = len(..20))]
     pub username: String,
     pub message: String,
-    // pub created_at: NaiveDateTime,
+    pub created_at: DateTimeWrapper,
 }
 
-/// Returns an infinite stream of server-sent events. Each event is a message
-/// pulled from a broadcast queue sent by the `post` handler.
+// 创建一个新的包装类型
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+struct DateTimeWrapper(String);
+
+impl<'v> FromFormField<'v> for DateTimeWrapper {
+    fn from_value(field: ValueField<'v>) -> rocket::form::Result<'v, Self> {
+        let naive_date_time = NaiveDateTime::parse_from_str(field.value, "%Y/%m/%d %H:%M:%S")
+            .map_err(|_| rocket::form::Error::validation("invalid datetime"));
+
+        Ok(DateTimeWrapper(
+            naive_date_time?.format("%Y-%m-%d %H:%M:%S").to_string(),
+        ))
+    }
+}
+
+impl UriDisplay<Query> for DateTimeWrapper {
+    fn fmt(&self, f: &mut Formatter<'_, Query>) -> fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
+impl Type<Sqlite> for DateTimeWrapper {
+    fn type_info() -> SqliteTypeInfo {
+        <String as Type<Sqlite>>::type_info()
+    }
+}
+
+impl<'r> Decode<'r, Sqlite> for DateTimeWrapper {
+    fn decode(
+        value: SqliteValueRef<'r>,
+    ) -> Result<Self, Box<dyn std::error::Error + Send + Sync + 'static>> {
+        let s = <&str as Decode<Sqlite>>::decode(value)?;
+        Ok(DateTimeWrapper(s.to_string()))
+    }
+}
+
+impl Encode<'_, Sqlite> for DateTimeWrapper {
+    fn encode_by_ref(
+        &self,
+        buf: &mut <Sqlite as sqlx::database::HasArguments>::ArgumentBuffer,
+    ) -> sqlx::encode::IsNull {
+        <String as Encode<Sqlite>>::encode(self.0.clone(), buf)
+    }
+}
+
 #[get("/events")]
 async fn events(queue: &State<Sender<Message>>, mut end: Shutdown) -> EventStream![] {
     let mut rx = queue.subscribe();
@@ -53,11 +100,8 @@ async fn events(queue: &State<Sender<Message>>, mut end: Shutdown) -> EventStrea
     }
 }
 
-/// Receive a message from a form submission and broadcast it to any receivers.
 #[post("/message", data = "<form>")]
 async fn post(mut db: Connection<MessageLog>, form: Form<Message>, queue: &State<Sender<Message>>) {
-    // A send 'fails' if there are no active subscribers. That's okay.
-
     let message = form.into_inner();
     let _res = queue.send(message.clone());
 
@@ -124,7 +168,6 @@ async fn init_message_database() {
 
 #[rocket::main]
 async fn main() -> Result<(), rocket::Error> {
-    // init the database (if not exists.)
     init_message_database().await;
 
     let _rocket = rocket::build()

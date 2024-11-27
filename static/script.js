@@ -184,12 +184,20 @@ function init () {
     const room = STATE.room
     const message = messageField.value
     const username = usernameField.value || 'guest'
+    const createdAt = messageField.dataset.createdAt || new Date().toLocaleString('zh-CN', { hour12: false }) // 默认值为当前时间，格式为 'YYYY-MM-DD HH:mm:ss'
+
     if (!message || !username) return
+
+    // 验证 created_at 字段是否存在且格式正确
+    // if (!createdAt || !isValidDateTime(createdAt)) {
+    //   alert('created_at 字段不存在或格式不正确。请提供一个有效的日期时间字符串，格式为 YYYY-MM-DD HH:mm:ss。')
+    //   return
+    // }
 
     if (STATE.connected) {
       fetch('/message', {
         method: 'POST',
-        body: new URLSearchParams({ room, username, message })
+        body: new URLSearchParams({ room, username, message, created_at: createdAt })
       }).then(response => {
         if (response.ok) messageField.value = ''
       })
@@ -219,6 +227,12 @@ function init () {
 
   // Subscribe to server-sent events.
   subscribe('/events')
+}
+
+// 验证日期时间字符串，格式为 YYYY-MM-DD HH:mm:ss
+function isValidDateTime(dateString) {
+  const regex = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/;
+  return regex.test(dateString) && !isNaN(Date.parse(dateString));
 }
 
 init()
