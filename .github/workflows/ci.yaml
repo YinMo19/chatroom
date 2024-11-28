@@ -67,13 +67,13 @@ jobs:
             cp "../target/${{ matrix.target }}/release/chatroom.exe" ./chatroom_release.exe
             cp -r "../static" ./
             cp "../Rocket.toml" ./
-            7z a "${{ matrix.archive-name }}" chatroom.exe chatroom_release.exe static
+            7z a "${{ matrix.archive-name }}" chatroom.exe chatroom_release.exe static Rocket.toml
           else
             cp "../target/${{ matrix.target }}/debug/chatroom" ./
             cp "../target/${{ matrix.target }}/release/chatroom" ./chatroom_release
             cp -r "../static" ./
             cp "../Rocket.toml" ./
-            tar -czf "${{ matrix.archive-name }}" chatroom chatroom_release static
+            tar -czf "${{ matrix.archive-name }}" chatroom chatroom_release static Rocket.toml
           fi
       - name: Upload archive
         uses: actions/upload-artifact@v4
