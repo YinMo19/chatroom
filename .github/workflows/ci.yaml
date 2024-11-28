@@ -66,11 +66,13 @@ jobs:
             cp "../target/${{ matrix.target }}/debug/chatroom.exe" ./
             cp "../target/${{ matrix.target }}/release/chatroom.exe" ./chatroom_release.exe
             cp -r "../static" ./
+            cp "../Rocket.toml" ./
             7z a "${{ matrix.archive-name }}" chatroom.exe chatroom_release.exe static
           else
             cp "../target/${{ matrix.target }}/debug/chatroom" ./
             cp "../target/${{ matrix.target }}/release/chatroom" ./chatroom_release
             cp -r "../static" ./
+            cp "../Rocket.toml" ./
             tar -czf "${{ matrix.archive-name }}" chatroom chatroom_release static
           fi
       - name: Upload archive
@@ -102,6 +104,6 @@ jobs:
       - name: Release
         uses: softprops/action-gh-release@v2
         with:
-          files: '/home/runner/work/chatroom/chatroom/archive/*'
+          files: './*'
           draft: true
           fail_on_unmatched_files: true
