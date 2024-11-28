@@ -2,6 +2,7 @@
 ## YinMo19
 
 This is a simple chatroom written in Rust/Rocket.
+![alt text](static/QQ_1732765166253.png)
 
 BASED ON
 ---
