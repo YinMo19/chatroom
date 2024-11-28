@@ -1,5 +1,5 @@
 [package]
-name = "rocket_test"
+name = "chatroom"
 version = "0.1.0"
 edition = "2021"
 

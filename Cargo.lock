@@ -220,6 +220,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 
 [[package]]
+name = "chatroom"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "rocket",
+ "rocket_db_pools",
+ "serde",
+ "serde_with",
+ "sqlx",
+]
+
+[[package]]
 name = "chrono"
 version = "0.4.38"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1763,18 +1775,6 @@ dependencies = [
  "time",
  "tokio",
  "uncased",
-]
-
-[[package]]
-name = "rocket_test"
-version = "0.1.0"
-dependencies = [
- "chrono",
- "rocket",
- "rocket_db_pools",
- "serde",
- "serde_with",
- "sqlx",
 ]
 
 [[package]]
