@@ -42,7 +42,7 @@ jobs:
         if: matrix.build == 'linux'
         run: |
           sudo apt-get update
-          sudo apt-get install libssl-dev cmake pkg-config musl-gcc
+          sudo apt-get install libssl-dev cmake pkg-config musl-tools
 
       - name: Build binary
         run: cargo build --target ${{ matrix.target }}
