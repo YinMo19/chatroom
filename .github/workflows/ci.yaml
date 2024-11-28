@@ -65,11 +65,13 @@ jobs:
           if [ "${{ matrix.build }}" = "windows" ]; then
             cp "../target/${{ matrix.target }}/debug/chatroom.exe" ./
             cp "../target/${{ matrix.target }}/release/chatroom.exe" ./chatroom_release.exe
-            7z a "${{ matrix.archive-name }}" chatroom.exe
+            cp -r "../static" ./
+            7z a "${{ matrix.archive-name }}" chatroom.exe chatroom_release.exe static
           else
             cp "../target/${{ matrix.target }}/debug/chatroom" ./
             cp "../target/${{ matrix.target }}/release/chatroom" ./chatroom_release
-            tar -czf "${{ matrix.archive-name }}" chatroom
+            cp -r "../static" ./
+            tar -czf "${{ matrix.archive-name }}" chatroom chatroom_release static
           fi
       - name: Upload archive
         uses: actions/upload-artifact@v4
