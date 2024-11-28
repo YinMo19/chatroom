@@ -18,7 +18,7 @@ async fn main() -> Result<(), rocket::Error> {
         .attach(database::MessageLog::init())
         .manage(rocket::tokio::sync::broadcast::channel::<Message>(1024).0)
         .mount("/", routes![routes::post, routes::events, routes::get_history])
-        .mount("/", rocket::fs::FileServer::from(rocket::fs::relative!("static")))
+        .mount("/", rocket::fs::FileServer::from("static"))
         .launch()
         .await?;
 
