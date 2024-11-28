@@ -79,9 +79,29 @@ jobs:
           name: ${{ matrix.archive-name }}
           path: archive/${{ matrix.archive-name }}
 
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    if: ${{ startsWith(github.ref, 'refs/heads/main') }}
+    needs: [linux, windows, macos]
+    permissions:
+      # Use to sign the release artifacts
+      id-token: write
+      # Used to upload release artifacts
+      contents: write
+      # Used to generate artifact attestation
+      attestations: write
+    steps:
+      - uses: actions/download-artifact@v4
+      - name: Display structure of downloaded files
+        run: ls -R
+      # - name: Generate artifact attestation
+      #   uses: actions/attest-build-provenance@v1
+      #   with:
+      #     subject-path: 'wheels-*/*'
       - name: Release
         uses: softprops/action-gh-release@v2
         with:
-          files: archive/${{ matrix.archive-name }}
+          files: '/home/runner/work/chatroom/chatroom/archive/*'
           draft: true
           fail_on_unmatched_files: true
