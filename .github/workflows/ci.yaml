@@ -2,6 +2,14 @@ on: [push, pull_request]
 name: build
 
 jobs:
+  pwd:
+    name: pwd
+    runs-on: ubuntu-latest
+    if: ${{ startsWith(github.ref, 'refs/heads/main') }}
+    steps:
+      - name: pwd
+        run: pwd
+
   build:
     name: build
     runs-on: ${{ matrix.os }}
