@@ -2,14 +2,6 @@ on: [push, pull_request]
 name: build
 
 jobs:
-  pwd:
-    name: pwd
-    runs-on: ubuntu-latest
-    if: ${{ startsWith(github.ref, 'refs/heads/main') }}
-    steps:
-      - name: pwd
-        run: pwd
-
   build:
     name: build
     runs-on: ${{ matrix.os }}
@@ -105,6 +97,8 @@ jobs:
       - uses: actions/download-artifact@v4
       - name: Display structure of downloaded files
         run: ls -R
+      - name: pwd
+        run: pwd
       # - name: Generate artifact attestation
       #   uses: actions/attest-build-provenance@v1
       #   with:
@@ -112,6 +106,6 @@ jobs:
       - name: Release
         uses: softprops/action-gh-release@v2
         with:
-          files: './*'
+          files: '/home/runner/work/chatroom/chatroom/*'
           draft: true
           fail_on_unmatched_files: true
