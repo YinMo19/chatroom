@@ -37,6 +37,12 @@ jobs:
           profile: minimal
           override: true
           target: ${{ matrix.target }}
+      
+      - name: install openssl-tools
+        if: matrix.build == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install libssl-dev
 
       - name: Build binary
         run: cargo build --target ${{ matrix.target }}
