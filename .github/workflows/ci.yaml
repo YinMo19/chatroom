@@ -78,3 +78,10 @@ jobs:
         with:
           name: ${{ matrix.archive-name }}
           path: archive/${{ matrix.archive-name }}
+
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: archive/${{ matrix.archive-name }}
+          draft: true
+          fail_on_unmatched_files: true
