@@ -83,7 +83,7 @@ jobs:
     name: Release
     runs-on: ubuntu-latest
     if: ${{ startsWith(github.ref, 'refs/heads/main') }}
-    needs: [linux, windows, macos]
+    needs: [build]
     permissions:
       # Use to sign the release artifacts
       id-token: write
