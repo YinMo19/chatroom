@@ -45,13 +45,17 @@ jobs:
           sudo apt-get install libssl-dev cmake pkg-config musl-tools
 
       - name: Build binary
-        run: cargo build --target ${{ matrix.target }}
+        run: |
+          cargo build --target ${{ matrix.target }}
+          cargo build --release --target ${{ matrix.target }} 
         env:
           RUST_BACKTRACE: 1
 
       - name: Strip binary (linux and macos)
         if: matrix.build == 'linux' || matrix.build == 'macos'
-        run: strip "target/${{ matrix.target }}/debug/chatroom"
+        run: |
+          strip "target/${{ matrix.target }}/debug/chatroom"
+          strip "target/${{ matrix.target }}/release/chatroom"
 
       - name: Build archive
         shell: bash
@@ -60,9 +64,11 @@ jobs:
           cd archive
           if [ "${{ matrix.build }}" = "windows" ]; then
             cp "../target/${{ matrix.target }}/debug/chatroom.exe" ./
+            cp "../target/${{ matrix.target }}/release/chatroom.exe" ./chatroom_release.exe
             7z a "${{ matrix.archive-name }}" chatroom.exe
           else
             cp "../target/${{ matrix.target }}/debug/chatroom" ./
+            cp "../target/${{ matrix.target }}/release/chatroom" ./chatroom_release
             tar -czf "${{ matrix.archive-name }}" chatroom
           fi
       - name: Upload archive
